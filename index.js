@@ -1,11 +1,30 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import cron from "node-cron";
+import https from "https";
 
 dotenv.config()
 
-const app = express();
+function keepAlive(url) {
+  https
+    .get(url, (res) => {
+      console.log(`Status: ${res.statusCode}`);
+    })
+    .on("error", (error) => {
+      console.error(`Error: ${error.message}`);
+    });
+}
+
+
 const port = process.env.PORT;
+
+cron.schedule("*/5 * * * *", () => {
+  keepAlive(process.env.LIVE_URL || `http://localhost:${port}`);
+  console.log("Pinging the server every 5 minutes");
+});
+
+const app = express();
 
 app.options("*", cors());
 app.use(
